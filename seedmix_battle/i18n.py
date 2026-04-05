@@ -1,0 +1,77 @@
+"""
+Seedmix Battle — mod-local translations.
+"""
+
+_STRINGS = {
+    "en": {
+        "menu_seedmix_battle": "SEEDMIX BATTLE",
+        "sm_private_match": "Private Match",
+        "sm_private_desc": "Host a room and invite a friend by IP",
+        "sm_official_match": "Official Match",
+        "sm_official_desc": "Connect to an official server",
+        "sm_official_soon": "Coming Soon",
+        "sm_host_room": "Host Room",
+        "sm_join_room": "Join Room",
+        "sm_enter_address": "Enter Host Address:",
+        "sm_starting_server": "Starting server on port {port}...",
+        "sm_server_running": "Server running — share your IP to invite",
+        "sm_your_address": "Your address: {addr}",
+        "sm_waiting_opponent": "Waiting for opponent...",
+        "sm_connecting": "Connecting{dots}",
+        "sm_connected": "Connected!",
+        "sm_connection_failed": "Connection failed",
+        "sm_opponent_joined": "Opponent joined!",
+        "sm_ready": "Ready! Press ENTER to start",
+        "sm_select_song": "Select Song",
+    },
+    "ko": {
+        "menu_seedmix_battle": "SEEDMIX BATTLE",
+        "sm_private_match": "프라이빗 매치",
+        "sm_private_desc": "방을 열고 친구를 IP로 초대",
+        "sm_official_match": "공식 매치",
+        "sm_official_desc": "공식 서버에 접속",
+        "sm_official_soon": "준비 중",
+        "sm_host_room": "방 만들기",
+        "sm_join_room": "방 참가",
+        "sm_enter_address": "호스트 주소 입력:",
+        "sm_starting_server": "포트 {port}에서 서버 시작 중...",
+        "sm_server_running": "서버 실행 중 — IP를 공유해서 초대하세요",
+        "sm_your_address": "주소: {addr}",
+        "sm_waiting_opponent": "상대방을 기다리는 중...",
+        "sm_connecting": "연결 중{dots}",
+        "sm_connected": "연결됨!",
+        "sm_connection_failed": "연결 실패",
+        "sm_opponent_joined": "상대방 입장!",
+        "sm_ready": "준비 완료! ENTER를 눌러 시작",
+        "sm_select_song": "곡 선택",
+    },
+    "ja": {
+        "menu_seedmix_battle": "SEEDMIX BATTLE",
+        "sm_private_match": "プライベートマッチ",
+        "sm_private_desc": "ルームを作成してIPで招待",
+        "sm_official_match": "公式マッチ",
+        "sm_official_desc": "公式サーバーに接続",
+        "sm_official_soon": "近日公開",
+        "sm_host_room": "ルーム作成",
+        "sm_join_room": "ルーム参加",
+        "sm_enter_address": "ホストアドレス入力:",
+        "sm_starting_server": "ポート{port}でサーバー起動中...",
+        "sm_server_running": "サーバー稼働中 — IPを共有して招待",
+        "sm_your_address": "アドレス: {addr}",
+        "sm_waiting_opponent": "対戦相手を待っています...",
+        "sm_connecting": "接続中{dots}",
+        "sm_connected": "接続完了！",
+        "sm_connection_failed": "接続失敗",
+        "sm_opponent_joined": "対戦相手が参加！",
+        "sm_ready": "準備完了！ENTERでスタート",
+        "sm_select_song": "曲選択",
+    },
+}
+
+
+def t(key: str, **kwargs) -> str:
+    from only4bms.i18n import get_language
+    lang = get_language()
+    table = _STRINGS.get(lang, _STRINGS.get("en", {}))
+    s = table.get(key) or _STRINGS.get("en", {}).get(key, key)
+    return s.format(**kwargs) if kwargs else s
