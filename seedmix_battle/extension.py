@@ -19,7 +19,7 @@ _AI_DT = 1.0 / 120.0  # opponent engine update rate
 class SeedmixBattleExtension(GameExtension):
     """Drives opponent engine from network state and renders dual-player HUD."""
 
-    def __init__(self, net_manager):
+    def __init__(self, net_manager=None):
         self._net = net_manager
         self._update_timer = 0.0
 
@@ -76,6 +76,8 @@ class SeedmixBattleExtension(GameExtension):
     # -- Per-note: send score -----------------------------------------------
 
     def on_judgment(self, key: str, lane: int, t_ms: float) -> None:
+        if not self._net:
+            return
         game = self._game
         self._net.send_score(game.judgments, game.combo)
 
@@ -89,6 +91,8 @@ class SeedmixBattleExtension(GameExtension):
         self._update_timer = t_now
 
         game.ai_engine.update(sim_time_ms)
+        if not self._net:
+            return
         opp = self._net.opponent_state
         if opp:
             game.ai_judgments = opp.get("judgments", game.ai_judgments)

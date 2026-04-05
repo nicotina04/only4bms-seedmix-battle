@@ -45,7 +45,7 @@ class SeedmixMenu:
 
         self.clock = pygame.time.Clock()
         self.running = True
-        self.selected = 0  # 0: private, 1: official
+        self.selected = 0  # 0: solo test, 1: private, 2: official
 
     def _s(self, v):
         return max(1, int(v * self.sy))
@@ -63,10 +63,14 @@ class SeedmixMenu:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         self.running = False
-                    elif event.key in (pygame.K_UP, pygame.K_DOWN):
-                        self.selected = 1 - self.selected
+                    elif event.key == pygame.K_UP:
+                        self.selected = max(0, self.selected - 1)
+                    elif event.key == pygame.K_DOWN:
+                        self.selected = min(2, self.selected + 1)
                     elif event.key == pygame.K_RETURN:
                         if self.selected == 0:
+                            self._run_solo_test()
+                        elif self.selected == 1:
                             self._run_private_match()
                         # official match: disabled for now
 
@@ -104,6 +108,7 @@ class SeedmixMenu:
 
         # Menu items
         items = [
+            (_t("sm_solo_test"), _t("sm_solo_desc"), True),
             (_t("sm_private_match"), _t("sm_private_desc"), True),
             (_t("sm_official_match"), _t("sm_official_soon"), False),
         ]
@@ -147,6 +152,14 @@ class SeedmixMenu:
             self.screen, "UP/DOWN  Select    ENTER  Confirm    ESC  Back",
             self.small_font, self.h, self.w,
         )
+
+    # -- Solo test flow -----------------------------------------------------
+
+    def _run_solo_test(self):
+        lobby = SoloSongSelect(
+            self.settings, self.renderer, self.window, **self.ctx,
+        )
+        lobby.run()
 
     # -- Private match flow -------------------------------------------------
 
@@ -570,5 +583,184 @@ class PrivateLobbyMenu:
 
         draw_hint_bar(
             self.screen, "UP/DOWN  Navigate    ENTER  Start    ESC  Back",
+            self.small_font, self.h, self.w,
+        )
+
+
+class SoloSongSelect:
+    """Solo test mode: pick a local song and play with dual-lane layout, no opponent."""
+
+    def __init__(self, settings, renderer, window, **ctx):
+        self.settings = settings
+        self.renderer = renderer
+        self.window = window
+        self.ctx = ctx
+
+        self.w, self.h = window.size
+        self.sx, self.sy = self.w / BASE_W, self.h / BASE_H
+
+        self.screen = pygame.Surface((self.w, self.h), pygame.SRCALPHA)
+        self._bg = make_bg_cache(self.w, self.h)
+        self.texture = None
+
+        self.title_font = _i18n.font("ui_title", self.sy, bold=True)
+        self.body_font = _i18n.font("ui_body", self.sy)
+        self.small_font = _i18n.font("menu_small", self.sy)
+
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.song_list = []
+        self.song_idx = 0
+
+        self._scan_songs()
+
+    def _s(self, v):
+        return max(1, int(v * self.sy))
+
+    def _scan_songs(self):
+        song_dir = paths.SONG_DIR
+        if not os.path.isdir(song_dir):
+            return
+        for entry in sorted(os.listdir(song_dir)):
+            entry_path = os.path.join(song_dir, entry)
+            if os.path.isdir(entry_path):
+                for f in os.listdir(entry_path):
+                    if f.lower().endswith((".bms", ".bme", ".bml")):
+                        self.song_list.append({
+                            "dir": entry,
+                            "file": f,
+                            "path": os.path.join(entry_path, f),
+                        })
+
+    def run(self):
+        from pygame._sdl2.video import Texture
+
+        pygame.key.set_repeat(300, 50)
+        pygame.event.clear()
+
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.running = False
+                    elif event.key == pygame.K_UP:
+                        self.song_idx = max(0, self.song_idx - 1)
+                    elif event.key == pygame.K_DOWN and self.song_list:
+                        self.song_idx = min(len(self.song_list) - 1, self.song_idx + 1)
+                    elif event.key == pygame.K_RETURN and self.song_list:
+                        self._start_game(self.song_list[self.song_idx])
+
+            self._draw()
+
+            if not self.texture:
+                self.texture = Texture.from_surface(self.renderer, self.screen)
+            else:
+                self.texture.update(self.screen)
+
+            self.renderer.clear()
+            self.renderer.blit(self.texture, pygame.Rect(0, 0, self.w, self.h))
+            self.renderer.present()
+            self.clock.tick(self.settings.get("fps", 60))
+
+        pygame.key.set_repeat(0)
+
+    def _start_game(self, song_info):
+        from only4bms.core.bms_parser import BMSParser
+        from only4bms.game.rhythm_game import RhythmGame
+        from .extension import SeedmixBattleExtension
+
+        init_mixer_fn = self.ctx.get("init_mixer_fn")
+        challenge_manager = self.ctx.get("challenge_manager")
+
+        if init_mixer_fn:
+            init_mixer_fn(self.settings)
+
+        parser = BMSParser(song_info["path"])
+        notes, bgms, bgas, bmp_map, visual_timing_map, measures = parser.parse()
+
+        if not notes and not bgms:
+            return
+
+        metadata = {
+            "artist": parser.artist,
+            "bpm": parser.bpm,
+            "level": parser.playlevel,
+            "genre": parser.genre,
+            "notes": parser.total_notes,
+            "stagefile": parser.stagefile,
+            "banner": parser.banner,
+            "total": parser.total,
+            "lanes_compressed": parser.lanes_compressed,
+        }
+
+        game = RhythmGame(
+            notes, bgms, bgas, parser.wav_map, bmp_map,
+            parser.title, self.settings,
+            visual_timing_map=visual_timing_map,
+            measures=measures,
+            mode="seedmix_battle",
+            metadata=metadata,
+            renderer=self.renderer,
+            window=self.window,
+            note_mod="None",
+            challenge_manager=challenge_manager,
+            extension=SeedmixBattleExtension(),  # no net — solo mode
+        )
+        game.run()
+
+    def _draw(self):
+        self.screen.blit(self._bg, (0, 0))
+
+        draw_glow_text(
+            self.screen, _t("sm_solo_test"), self.title_font,
+            C_ACCENT, C_ACCENT,
+            (self.w // 2, self._s(30)), anchor="center", glow_radius=3,
+        )
+
+        panel_w, panel_h = self._s(520), self._s(380)
+        panel = pygame.Rect((self.w - panel_w) // 2, self._s(90), panel_w, panel_h)
+        draw_glass_panel(self.screen, panel, border_color=(*C_ACCENT, 80), radius=14, fill_alpha=10)
+
+        hdr = self.small_font.render(_t("sm_select_song").upper(), True, C_TEXT_DIM)
+        self.screen.blit(hdr, (panel.x + self._s(20), panel.y + self._s(14)))
+
+        if not self.song_list:
+            msg = self.body_font.render("No songs found in bms/ folder", True, C_TEXT_SECONDARY)
+            self.screen.blit(msg, msg.get_rect(center=panel.center))
+            draw_hint_bar(self.screen, "ESC  Back", self.small_font, self.h, self.w)
+            return
+
+        row_h = self._s(40)
+        visible = max(1, (panel.height - self._s(50)) // row_h)
+        start_y = panel.y + self._s(44)
+
+        scroll = max(0, self.song_idx - visible + 1)
+        for i, song in enumerate(self.song_list):
+            if i < scroll or i >= scroll + visible:
+                continue
+            row = i - scroll
+            is_sel = (i == self.song_idx)
+            rect = pygame.Rect(
+                panel.x + self._s(10),
+                start_y + row * row_h,
+                panel.width - self._s(20),
+                row_h - self._s(4),
+            )
+
+            if is_sel:
+                bg = pygame.Surface(rect.size, pygame.SRCALPHA)
+                pygame.draw.rect(bg, (*C_ACCENT, 18), (0, 0, *rect.size), border_radius=8)
+                self.screen.blit(bg, rect.topleft)
+                pygame.draw.rect(self.screen, (*C_ACCENT, 180), rect, 1, border_radius=8)
+
+            txt = f"{song['dir']} / {song['file']}"
+            color = C_ACCENT if is_sel else C_TEXT_PRIMARY
+            s = self.small_font.render(txt, True, color)
+            self.screen.blit(s, (rect.x + self._s(10), rect.centery - s.get_height() // 2))
+
+        draw_hint_bar(
+            self.screen, "UP/DOWN  Navigate    ENTER  Play    ESC  Back",
             self.small_font, self.h, self.w,
         )

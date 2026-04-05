@@ -5,6 +5,8 @@ Seedmix Battle — mod-local translations.
 _STRINGS = {
     "en": {
         "menu_seedmix_battle": "SEEDMIX BATTLE",
+        "sm_solo_test": "Solo Test",
+        "sm_solo_desc": "Play alone with the battle layout",
         "sm_private_match": "Private Match",
         "sm_private_desc": "Host a room and invite a friend by IP",
         "sm_official_match": "Official Match",
@@ -26,6 +28,8 @@ _STRINGS = {
     },
     "ko": {
         "menu_seedmix_battle": "SEEDMIX BATTLE",
+        "sm_solo_test": "솔로 테스트",
+        "sm_solo_desc": "배틀 레이아웃으로 혼자 플레이",
         "sm_private_match": "프라이빗 매치",
         "sm_private_desc": "방을 열고 친구를 IP로 초대",
         "sm_official_match": "공식 매치",
@@ -47,6 +51,8 @@ _STRINGS = {
     },
     "ja": {
         "menu_seedmix_battle": "SEEDMIX BATTLE",
+        "sm_solo_test": "ソロテスト",
+        "sm_solo_desc": "バトルレイアウトで一人プレイ",
         "sm_private_match": "プライベートマッチ",
         "sm_private_desc": "ルームを作成してIPで招待",
         "sm_official_match": "公式マッチ",
