@@ -24,7 +24,10 @@ _STRINGS = {
         "sm_connection_failed": "Connection failed",
         "sm_opponent_joined": "Opponent joined!",
         "sm_ready": "Ready! Press ENTER to start",
-        "sm_select_song": "Select Song",
+        "sm_start_battle": "Start Battle (Host)",
+        "sm_turn_of": "Turn {n}/{total}",
+        "sm_transition": "Next turn loading...",
+        "sm_battle_result": "BATTLE RESULT",
     },
     "ko": {
         "menu_seedmix_battle": "SEEDMIX BATTLE",
@@ -47,7 +50,10 @@ _STRINGS = {
         "sm_connection_failed": "연결 실패",
         "sm_opponent_joined": "상대방 입장!",
         "sm_ready": "준비 완료! ENTER를 눌러 시작",
-        "sm_select_song": "곡 선택",
+        "sm_start_battle": "배틀 시작 (호스트)",
+        "sm_turn_of": "턴 {n}/{total}",
+        "sm_transition": "다음 턴 로딩 중...",
+        "sm_battle_result": "배틀 결과",
     },
     "ja": {
         "menu_seedmix_battle": "SEEDMIX BATTLE",
@@ -70,7 +76,10 @@ _STRINGS = {
         "sm_connection_failed": "接続失敗",
         "sm_opponent_joined": "対戦相手が参加！",
         "sm_ready": "準備完了！ENTERでスタート",
-        "sm_select_song": "曲選択",
+        "sm_start_battle": "バトル開始 (ホスト)",
+        "sm_turn_of": "ターン {n}/{total}",
+        "sm_transition": "次のターン準備中...",
+        "sm_battle_result": "バトル結果",
     },
 }
 
